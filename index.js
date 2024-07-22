@@ -2,54 +2,60 @@
 // where your node app starts
 
 // init project
-var express = require('express');
-var app = express();
-dotenv = require('dotenv');
-dotenv.config();
+const express = require('express');
+const app = express();
 
 // enable CORS (https://en.wikipedia.org/wiki/Cross-origin_resource_sharing)
 // so that your API is remotely testable by FCC 
-var cors = require('cors');
-app.use(cors({ optionsSuccessStatus: 200 }));  // some legacy browsers choke on 204
+const cors = require('cors');
+app.use(cors({ optionsSuccessStatus: 200 })); // some legacy browsers choke on 204
 
-// http://expressjs.com/en/starter/static-files.html
+// serve static files
 app.use(express.static('public'));
 
-// http://expressjs.com/en/starter/basic-routing.html
+// serve index.html
 app.get("/", function (req, res) {
   res.sendFile(__dirname + '/views/index.html');
 });
 
-const isInvalidDate = (date) => date.toUTCString() === "Invalid Date"
+// API endpoint
+app.get("/api/:date?", (req, res) => {
+  let input = req.params.date;
 
-// your first API endpoint... 
-app.get("/api/:date", function (req, res) {
-  let date = new Date(req.params.date)
-
-  if (isInvalidDate(date)) {
-    date = new Date(+req.params.date)
+  // Check if input is empty
+  if (!input) {
+    // Return current date and time
+    const now = new Date();
+    return res.json({
+      unix: now.getTime(),
+      utc: now.toUTCString()
+    });
   }
 
-  if (isInvalidDate(date)) {
-    res.json({ error: "Invalid Date" })
-    return;
+  // Check if input is a valid Unix timestamp
+  if (/^\d+$/.test(input)) {
+    const date = new Date(parseInt(input));
+    return res.json({
+      unix: date.getTime(),
+      utc: date.toUTCString()
+    });
   }
 
+  // Check if input is a valid date string
+  const date = new Date(input);
+  if (date.toString() === 'Invalid Date') {
+    return res.json({ error: "Invalid Date" });
+  }
+
+  // Return valid date results
   res.json({
     unix: date.getTime(),
     utc: date.toUTCString()
   });
 });
 
-app.get("/api", (req, res) => {
-    res.json({
-      unix: new Date().getTime(),
-      utc: new Date().toUTCString()
-    })
-  })
-
-
-// listen for requests :)
-var listener = app.listen(process.env.PORT, function () {
-  console.log('Your app is listening on port ' + listener.address().port);
+// Listen for requests
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });
