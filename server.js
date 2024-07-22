@@ -12,6 +12,12 @@ app.get("/", (req, res) => {
     }
   });
 });
+app.get("/api", (req, res) => {
+  res.json({
+    unix: new Date().getTime(),
+    utc: new Date().toUTCString()
+  })
+})
 
 app.get("/api/:date?", (req, res) => {
   let dateString = req.params.date;
